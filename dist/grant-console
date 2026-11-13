@@ -3,7 +3,7 @@
 #
 # Called from udev as root with the sysfs path of a keyboard console hidraw
 # node. Opens the node to group fw16-backlight only if the HID-BPF filter is
-# loaded on its HID device; otherwise leaves it root-only and says why.
+# loaded on its HID device; otherwise sets it back to root-only and says why.
 set -eu
 
 dev=$1                                   # .../<hid device>/hidraw/hidrawN
@@ -14,5 +14,8 @@ if /usr/bin/udev-hid-bpf list-loaded --syspath "$hid" 2>/dev/null | grep -q 'fw1
 	chgrp fw16-backlight "$node"
 	chmod 0660 "$node"
 else
-	logger -t fw16-backlight "filter not loaded on $hid; $node left root-only"
+	# udev does not reset ownership on a change event, so revoke explicitly.
+	chgrp root "$node"
+	chmod 0600 "$node"
+	logger -t fw16-backlight "filter not loaded on $hid; $node set root-only"
 fi

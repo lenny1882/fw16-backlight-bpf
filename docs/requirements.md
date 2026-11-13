@@ -11,7 +11,7 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
 | W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
-| W6 Confinement and install | Files written and statically checked (rule syntax, `make -n`); nothing installed or run on hardware yet. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
+| W6 Confinement and install | In progress. Installed and verified on hardware: permissions, service identity, sandbox score, fail closed. Left: `make install` then reboot, uninstall, hidraw numbers after reboot, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
@@ -142,11 +142,11 @@ Acceptance:
 ### W6 Confinement and install (step 4)
 Covers: S1 to S4, B2, B3, B4.
 Acceptance:
-- [ ] The service cannot open the console node before the filter is attached. After a re-enumeration the node exists for a moment without the filter, and a keystroke in that gap would be read raw (the service then exits, but it has seen the text). The W5 re-seat test did not exercise this because no key was pressed in the gap.
-- [ ] udev rule gives the group access to the filtered console node and the two VIA nodes only; no other `32AC` node.
-- [ ] Systemd unit runs as `DynamicUser`; `systemd-analyze security` reports no exposure for network or filesystem writes beyond what is needed.
-- [ ] Fail-closed check implemented and shown working: unload the filter, the service refuses to read and logs the reason. The approach is recorded (the root-only `/sys/fs/bpf` rules out a direct check by an unprivileged service).
-- [ ] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access.
+- [x] The service cannot open the console node before the filter is attached. By construction: the node stays root-only, and `grant-console` opens it to the group only after `udev-hid-bpf list-loaded` shows the filter on its HID device, and revokes it otherwise (checked by removing the filter and re-triggering: `root:root 0600`, and the restarted service logged `cannot open ... Permission denied`, 2026-11-13). If udev ever ran the hidraw event before the filter attach finished, the cost would be availability (no grant), not exposure; whether the ordering holds is checked by the reboot and re-seat items below. Limit: removing the filter without a udev event on the node leaves the group access in place until the next event; the service's own check (next item) is the backstop.
+- [x] udev rule gives the group access to the filtered console node and the two VIA nodes only; no other `32AC` node. Checked on the installed system: of the 10 `32AC` nodes only the keyboard console and the keyboard and numpad VIA nodes were `root:fw16-backlight 0660`; the numpad console and every key interface stayed `root:root 0600`.
+- [x] Systemd unit runs as `DynamicUser`; `systemd-analyze security` reports 0.6 SAFE, and `systemd-analyze verify` is clean. The running service had uid 63932, group `fw16-backlight`, `CapEff` 0 and `NoNewPrivs` 1.
+- [x] Fail-closed check implemented and shown working, in two layers. (1) The unprivileged service cannot read `/sys/fs/bpf`, so the filter check lives in the root helper `grant-console` (see the access item above). (2) The service refuses raw text: with the filter removed under the running service and one key pressed, it logged `console is not filtered (raw text); refusing to run` and exited 2, and `RestartPreventExitStatus=2` keeps it failed. Limit: layer 2 reads one raw report into memory before it notices; it is never logged.
+- [ ] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access. The logind ACL issue does not apply: these nodes carry only the `seat` tag, not `uaccess`. A fresh boot and a live re-seat are still to be tested.
 - [ ] `make install` then reboot: the program loads, the service starts, sync works, with no manual step.
 - [ ] `make uninstall` leaves no udev rule, object, unit or loaded program.
 - [ ] After the install and a reboot, the service finds its nodes when the hidraw numbers differ from the previous boot (record the numbers before and after). Not demonstrable earlier: the console re-enumerated as `hidraw8` again.
