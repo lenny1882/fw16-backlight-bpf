@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: LicenseRef-MIT-Commons-Clause
 #
 # Called from udev as root with the sysfs path of a keyboard console hidraw
 # node. Opens the node to group fw16-backlight only if the HID-BPF filter is

@@ -1,0 +1,19 @@
+fw16-backlight-bpf is covered by two licences, split by directory.
+
+1. bpf/  (the HID-BPF program and the vendored HID-BPF headers)
+
+   GPL-2.0-only. The headers are copied from udev-hid-bpf (Copyright (c)
+   2022 Benjamin Tissoires) under that licence, and the kernel requires a
+   GPL-compatible licence for HID-BPF programs. Text: LICENSES/GPL-2.0-only.txt
+
+2. Everything else  (src/, dist/, Makefile, docs/, README.md)
+
+   MIT with the Commons Clause: free to use, copy, change and share, but not
+   to sell, including paid hosting or support services whose value comes
+   mainly from this software. Copyright (c) 2026 lenny1882.
+   Text: LICENSES/LicenseRef-MIT-Commons-Clause.txt
+
+Each source file carries an SPDX-License-Identifier line saying which applies.
+The two parts are separate programs: the BPF object runs in the kernel, and
+the service, helper script and packaging talk to it only through the kernel's
+hidraw and sysfs interfaces.

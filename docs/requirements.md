@@ -12,7 +12,7 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
 | W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
 | W6 Confinement and install | Done, except suspend/resume (optional, not tested; a physical module pull was deliberately skipped). Verified on hardware: permissions, service identity, sandbox score, fail closed, uninstall and repeat install, reboot with changed hidraw numbers, software re-enumeration of both modules. |
-| W7 Repo housekeeping | Next: no `LICENSE`; the README "Try step 1" section is out of date. |
+| W7 Repo housekeeping | Done. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
 1. `make clean && make` (a plain `make` may keep the old `vmlinux.h`).
@@ -160,8 +160,8 @@ Acceptance:
 
 ### W7 Repo housekeeping
 Acceptance:
-- [ ] `LICENSE` file with GPL-2.0-only text.
-- [ ] README status table and requirements updated (D1).
+- [x] Licences in place. Split licensing: `bpf/` (the program and the vendored headers) stays GPL-2.0-only, because the headers are GPL-2.0-only and HID-BPF programs need a GPL-compatible licence; everything else is MIT with the Commons Clause. `LICENSE` summarises the split, `LICENSES/` holds the two texts (the GPL text is Arch's SPDX copy), and each source file has an SPDX line. The `Software:` line in the Commons Clause text has no repository URL, because this repo has no remote yet.
+- [x] README status table and requirements updated (D1), and the stale "Try step 1" section replaced by install and use instructions, the layout and the licence.
 
 ## 7. Open questions (each blocks a work item)
 

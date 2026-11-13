@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-MIT-Commons-Clause
 # Access for the fw16-backlight-sync service (group fw16-backlight).
 #
 # Needs the ID_* properties that 60-persistent-hidraw.rules imports, so this

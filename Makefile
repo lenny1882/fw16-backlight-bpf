@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-MIT-Commons-Clause
 CLANG   ?= clang
 BPFTOOL ?= bpftool
 CC      ?= cc

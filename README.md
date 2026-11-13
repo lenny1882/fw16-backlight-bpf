@@ -19,29 +19,42 @@ All four steps work and were verified on hardware (Framework Laptop 16, ISO keyb
 
 ## Requirements
 
-- Kernel with `CONFIG_HID_BPF=y` and BTF (`/sys/kernel/btf/vmlinux`)
-- `clang`, `bpftool` (Arch package `bpf`), `make`
-- [`udev-hid-bpf`](https://libevdev.pages.freedesktop.org/udev-hid-bpf/) (Arch package `udev-hid-bpf`)
+- Kernel with `CONFIG_HID_BPF=y` and BTF (`/sys/kernel/btf/vmlinux`). Tested on 7.2.15 and 7.3.4.
+- To build: `gcc`, `clang`, `bpftool` (Arch package `bpf`), `make`. `make` names any missing tool and its package.
+- To install: `sudo`, systemd, and [`udev-hid-bpf`](https://libevdev.pages.freedesktop.org/udev-hid-bpf/) (Arch package `udev-hid-bpf`).
 
-## Try step 1
+Tested on a Framework Laptop 16 with the ISO keyboard module and the numpad module, on Arch.
+
+## Install and use
 
     make
-    sudo udev-hid-bpf --verbose add /sys/bus/hid/devices/<keyboard console device> $PWD/build/fw16-backlight.bpf.o
-    sudo sh -c 'cat /dev/$(ls /sys/bus/hid/devices/<keyboard console device>/hidraw) > /dev/null'
-    sudo cat /sys/kernel/tracing/trace_pipe
+    make install     # asks for sudo
+    make reload      # applies it to modules that are already attached; a reboot does the same
 
-The console device is the keyboard's HID device whose report descriptor starts `06 31 ff`. Run the last two commands in separate terminals: the console node must be held open or no reports arrive. Press Fn+Space and look for `fw16-backlight: step N`.
+`make install` makes the filter load whenever the keyboard module appears (through `udev-hid-bpf`), and installs the service, a udev rule and a small helper under `/usr/local/lib/fw16-backlight`. It also creates the group `fw16-backlight` and starts the service. There is nothing else to do: press Fn+Space and the numpad follows the keyboard.
 
-`make install` installs the object and a udev rule so it loads when the module appears; `make uninstall` removes both.
+Look at it with:
+
+    systemctl status fw16-backlight-sync
+    journalctl -u fw16-backlight-sync
+
+The service logs nothing while all is well. A line means something was wrong, and it is logged once per problem. Two you may meet:
+
+- `numpad VIA node not found`: the numpad module is not attached. It recovers by itself.
+- `console is not filtered (raw text); refusing to run`: the filter is not loaded, so the service stopped on purpose and stays stopped. Run `make reload`, then `sudo systemctl restart fw16-backlight-sync`.
+
+`make uninstall` removes everything, including the group and the loaded filter. It is safe to run twice.
 
 ## Layout
 
+    LICENSE, LICENSES/            which licence covers which files, and the texts
     bpf/fw16-backlight.bpf.c      the HID-BPF program
     bpf/include/                  headers vendored from udev-hid-bpf
     src/fw16-backlight-sync.c     the sync service
     dist/                         udev rule, console-access helper, sysusers file, systemd unit
-    docs/protocol.md              interfaces, VIA bytes, console line
-    Makefile                      build and install
+    docs/protocol.md              interfaces, VIA bytes, console line, event report
+    docs/requirements.md          the working checklist and the test results
+    Makefile                      build, install, reload, uninstall
 
 ## Known limits
 
@@ -54,4 +67,7 @@ The console device is the keyboard's HID device whose report descriptor starts `
 
 ## License
 
-GPL-2.0-only, as required for HID-BPF programs.
+Two licences, split by directory (details in `LICENSE`, texts in `LICENSES/`):
+
+- `bpf/` (the HID-BPF program and the vendored headers): **GPL-2.0-only**. The headers come from udev-hid-bpf under that licence, and the kernel requires a GPL-compatible licence for HID-BPF programs.
+- Everything else (the service, helper script, unit, udev rule, Makefile, docs): **MIT with the Commons Clause**. Free to use, change and share, but not to sell, including paid hosting or support whose value comes mainly from this software. That is not an open-source licence in the usual sense, and it does not cover `bpf/`, which anyone may sell under the GPL's terms.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: LicenseRef-MIT-Commons-Clause
 /*
  * Keep the Framework Laptop 16 numpad backlight level equal to the
  * keyboard's. Blocks in read() on the filtered console node; on each event
