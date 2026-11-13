@@ -1,0 +1,46 @@
+[Unit]
+Description=Keep the Framework Laptop 16 numpad backlight in step with the keyboard
+
+[Service]
+Type=simple
+ExecStart=@LIBEXECDIR@/fw16-backlight-sync
+Restart=on-failure
+RestartSec=5
+# Exit status 2 means the console is not filtered. Do not retry; stay failed.
+RestartPreventExitStatus=2
+
+# No privileges, no state, no network. Reads sysfs, talks to three hidraw nodes.
+DynamicUser=yes
+SupplementaryGroups=fw16-backlight
+DevicePolicy=closed
+DeviceAllow=char-hidraw rw
+CapabilityBoundingSet=
+AmbientCapabilities=
+NoNewPrivileges=yes
+PrivateNetwork=yes
+IPAddressDeny=any
+RestrictAddressFamilies=none
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+UMask=0077
+RemoveIPC=yes
+
+[Install]
+WantedBy=multi-user.target

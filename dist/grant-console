@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Called from udev as root with the sysfs path of a keyboard console hidraw
+# node. Opens the node to group fw16-backlight only if the HID-BPF filter is
+# loaded on its HID device; otherwise leaves it root-only and says why.
+set -eu
+
+dev=$1                                   # .../<hid device>/hidraw/hidrawN
+hid=$(dirname "$(dirname "$dev")")       # the HID device
+node=/dev/$(basename "$dev")
+
+if /usr/bin/udev-hid-bpf list-loaded --syspath "$hid" 2>/dev/null | grep -q 'fw16.backlight'; then
+	chgrp fw16-backlight "$node"
+	chmod 0660 "$node"
+else
+	logger -t fw16-backlight "filter not loaded on $hid; $node left root-only"
+fi

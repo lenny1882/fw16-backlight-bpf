@@ -6,12 +6,12 @@ The working list. Tick items as they are verified on hardware, not when written.
 
 | Item | State |
 |---|---|
-| W1 Build prerequisites | Packages installed and `make` builds. Dependency checks in the Makefile (B1) not written. |
+| W1 Build prerequisites | Packages installed and `make` builds. Dependency checks (B1) written; checked by naming a missing tool, not on a machine that lacks one. |
 | W2 Step 1 on hardware | Done. |
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
 | W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
-| W6 Confinement and install | Next. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
+| W6 Confinement and install | Files written and statically checked (rule syntax, `make -n`); nothing installed or run on hardware yet. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):

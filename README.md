@@ -39,6 +39,7 @@ The console device is the keyboard's HID device whose report descriptor starts `
     bpf/fw16-backlight.bpf.c      the HID-BPF program
     bpf/include/                  headers vendored from udev-hid-bpf
     src/fw16-backlight-sync.c     the sync service
+    dist/                         udev rule, console-access helper, sysusers file, systemd unit
     docs/protocol.md              interfaces, VIA bytes, console line
     Makefile                      build and install
 

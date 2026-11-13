@@ -1,0 +1,20 @@
+# Access for the fw16-backlight-sync service (group fw16-backlight).
+#
+# Needs the ID_* properties that 60-persistent-hidraw.rules imports, so this
+# file must sort after it. Only hidraw nodes of Framework modules (32ac).
+
+ACTION!="add|change", GOTO="fw16_backlight_end"
+SUBSYSTEM!="hidraw", GOTO="fw16_backlight_end"
+ENV{ID_VENDOR_ID}!="32ac", GOTO="fw16_backlight_end"
+
+# VIA raw HID (interface 1) of the keyboard (0018) and the numpad (0014).
+ENV{ID_USB_INTERFACE_NUM}=="01", ENV{ID_MODEL_ID}=="0018|0014", GROUP="fw16-backlight", MODE="0660"
+
+# Debug console (interface 3) of the keyboard. It prints every key position, so
+# it stays root-only. The helper opens it to the group only after confirming
+# the HID-BPF filter is loaded on its HID device. udev handles this hidraw
+# event only after the event of its parent HID device, which is where the
+# filter is attached, has finished.
+ENV{ID_USB_INTERFACE_NUM}=="03", ENV{ID_MODEL_ID}=="0018", RUN+="@LIBEXECDIR@/grant-console $sys$devpath"
+
+LABEL="fw16_backlight_end"
