@@ -40,4 +40,4 @@ Framework's QMK fork has a branch that builds with no debug output (`fl16-nodebu
 
 ## Vendored headers
 
-`bpf/include/hid_bpf.h` and `bpf/include/hid_bpf_helpers.h` are copied unchanged from udev-hid-bpf at commit bbaad63 (GPL-2.0-only, Copyright (c) 2022 Benjamin Tissoires). `vmlinux.h` is generated at build time from `/sys/kernel/btf/vmlinux`.
+`bpf/include/hid_bpf.h`, `hid_bpf_helpers.h` and `hid_report_descriptor_helpers.h` are copied unchanged from udev-hid-bpf at commit bbaad63 (GPL-2.0-only, Copyright (c) 2022 Benjamin Tissoires). `vmlinux.h` is generated at build time from `/sys/kernel/btf/vmlinux`.
