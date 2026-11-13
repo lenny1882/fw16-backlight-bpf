@@ -10,7 +10,8 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W2 Step 1 on hardware | Done. |
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
-| W5 Service, W6 Confinement and install | Not started. W5 is next. |
+| W5 Service | In progress. Start sync and press sync verified on hardware. Not yet tested: different hidraw numbers after reboot, re-seat and suspend/resume, VIA failure. |
+| W6 Confinement and install | Not started. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Facts learned that affect later work:
@@ -123,8 +124,8 @@ Acceptance:
 ### W5 Service (step 3)
 Covers: F4, F5, F6, F7.
 Acceptance:
-- [ ] At start the numpad level equals the keyboard level, from both an unequal starting state and an already equal one.
-- [ ] Fn+Space four times: after each press the numpad matches the keyboard within 1 s, and CPU use between presses is zero (blocked in `read()`, no timer).
+- [x] At start the numpad level equals the keyboard level, from both an unequal starting state and an already equal one (numpad forced to 0 against keyboard 85, then equal; both ended at 85, 2026-11-13).
+- [x] Fn+Space four times: after each press the numpad matched the keyboard within one 50 ms poll in 3 cases and 0.16 s in 1; idle CPU was 0 ticks over 5 s (blocked in `read()`, no timer).
 - [ ] Nodes are found by product id and interface; reboot with different hidraw numbers works unchanged.
 - [ ] Unplugging and re-seating the modules, or suspend/resume, leaves the service running and syncing.
 - [ ] A VIA read or write failure logs once and the service continues.

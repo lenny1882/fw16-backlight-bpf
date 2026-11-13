@@ -3,9 +3,14 @@ BPFTOOL ?= bpftool
 BUILD   := build
 NAME    := fw16-backlight
 OBJ     := $(BUILD)/$(NAME).bpf.o
+SYNC    := $(BUILD)/$(NAME)-sync
+CC      ?= cc
 CFLAGS  := -std=gnu11 -fno-stack-protector -O2 -target bpf -g -c -fms-extensions -Wno-microsoft-anon-tag -Wall
 
-all: $(OBJ)
+all: $(OBJ) $(SYNC)
+
+$(SYNC): src/$(NAME)-sync.c | $(BUILD)
+	$(CC) -std=gnu11 -O2 -Wall -Wextra -o $@ $<
 
 $(BUILD):
 	mkdir -p $@

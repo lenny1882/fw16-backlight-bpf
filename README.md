@@ -8,13 +8,13 @@ Protocol facts and how they were found: [docs/protocol.md](docs/protocol.md).
 
 ## Status
 
-Steps 1 and 2 of 4 done and verified on hardware. Steps 3 and 4 not started.
+Steps 1 and 2 of 4 done and verified on hardware. Step 3 works for start and press sync; hot-plug, resume and failure handling are untested. Step 4 not started.
 
 | Step | What | State |
 |---|---|---|
 | 1 | Match `backlight step: N` across 32-byte reports and log it with `bpf_printk` | works on the module: one match per Fn+Space (33 of 33); needs the console node held open |
 | 2 | Drop every other console report and rewrite the match to a short event report | works on the module: 8 presses gave 8 event reports and nothing else |
-| 3 | Service: blocking read of the filtered node, read keyboard level, set numpad over VIA, one sync at start | not started |
+| 3 | Service: blocking read of the filtered node, read keyboard level, set numpad over VIA, one sync at start | start and 4 presses verified on hardware, 0 idle CPU; hot-plug, resume, VIA failure untested |
 | 4 | udev rule, systemd unit, install script, fail-closed check that the filter is loaded | not started |
 
 ## Requirements
@@ -38,6 +38,7 @@ The console device is the keyboard's HID device whose report descriptor starts `
 
     bpf/fw16-backlight.bpf.c      the HID-BPF program
     bpf/include/                  headers vendored from udev-hid-bpf
+    src/fw16-backlight-sync.c     the sync service
     docs/protocol.md              interfaces, VIA bytes, console line
     Makefile                      build and install
 
