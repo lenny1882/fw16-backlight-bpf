@@ -38,6 +38,10 @@ with N cycling 0, 1, 2, 3, exactly one line per press. The console also prints e
 
 Framework's QMK fork has a branch that builds with no debug output (`fl16-nodebug`), so the console line is a firmware build option, not a contract.
 
+## Console reports only flow while the node is open
+
+With the BPF program attached but nothing holding the console hidraw node open, no `backlight step` line was seen. With `cat` holding the node open, every press was matched, one per press (5 of 5, steps 0, 1, 2, 3, 0). Most likely the USB HID driver only polls the interrupt endpoint while the device is open. The service must keep the console node open, which it does anyway by reading it.
+
 ## Vendored headers
 
 `bpf/include/hid_bpf.h`, `hid_bpf_helpers.h` and `hid_report_descriptor_helpers.h` are copied unchanged from udev-hid-bpf at commit bbaad63 (GPL-2.0-only, Copyright (c) 2022 Benjamin Tissoires). `vmlinux.h` is generated at build time from `/sys/kernel/btf/vmlinux`.

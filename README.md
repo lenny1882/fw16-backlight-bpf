@@ -26,10 +26,11 @@ Step 1 of 4. Nothing has run on hardware yet.
 ## Try step 1
 
     make
-    sudo udev-hid-bpf --verbose add /sys/bus/hid/devices/<keyboard console device> build/fw16-backlight.bpf.o
-    sudo cat /sys/kernel/debug/tracing/trace_pipe
+    sudo udev-hid-bpf --verbose add /sys/bus/hid/devices/<keyboard console device> $PWD/build/fw16-backlight.bpf.o
+    sudo sh -c 'cat /dev/$(ls /sys/bus/hid/devices/<keyboard console device>/hidraw) > /dev/null'
+    sudo cat /sys/kernel/tracing/trace_pipe
 
-The console device is the keyboard's HID device whose report descriptor starts `06 31 ff`. Press Fn+Space and look for `fw16-backlight: step N`.
+The console device is the keyboard's HID device whose report descriptor starts `06 31 ff`. Run the last two commands in separate terminals: the console node must be held open or no reports arrive. Press Fn+Space and look for `fw16-backlight: step N`.
 
 `make install` installs the object and a udev rule so it loads when the module appears; `make uninstall` removes both.
 
