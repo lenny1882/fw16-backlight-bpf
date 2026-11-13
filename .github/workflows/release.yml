@@ -1,0 +1,68 @@
+name: Release
+
+# Cutting a release is: push a vX.Y.Z tag from its release/vX.x branch. This
+# turns that tag into a GitHub Release with auto-generated notes, which is
+# what /releases/latest returns.
+#
+# GitHub fires this on any vX.Y.Z tag push, regardless of branch — a tag push
+# and a branch push are separate ref events, so `on.push` can't require the
+# tag to belong to a particular branch on its own, and a workflow-side check
+# would need the full git history just to answer that. Instead the guarantee
+# is process, not CI: docs/releasing.md is the only way tags get created, and
+# it only ever tags release/vX.x after merging main into it. Follow it and
+# this trigger is safe as-is.
+#
+# A tag with a hyphen (v1.2.0-rc1) is published as a pre-release, so it's
+# skipped by /releases/latest.
+#
+# GitHub's own "Source code" links (attached to every release for free) are
+# just the repo checkout at the tag, .github/ included — fine for
+# developers, wrong to hand to someone who just wants to build and install the
+# tool. So this builds a tarball of only what `make && make install` needs
+# (Makefile, bpf/, src/, dist/, docs/, the licences, VERSION, README), and
+# uploads it under a fixed filename, so a link that does not know the version
+# number in advance still works:
+# .../releases/latest/download/fw16-backlight-bpf.tar.gz always resolves to
+# the newest one, and .../releases/download/vX.Y.Z/fw16-backlight-bpf.tar.gz
+# to a specific one.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build install tarball
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          stage=$(mktemp -d)
+          git archive --format=tar \
+            --prefix="fw16-backlight-bpf/" \
+            -o "$stage/files.tar" \
+            "$TAG" -- Makefile bpf src dist docs LICENSE LICENSES VERSION README.md
+          tar -xf "$stage/files.tar" -C "$stage" && rm "$stage/files.tar"
+          tar -czf "fw16-backlight-bpf.tar.gz" -C "$stage" "fw16-backlight-bpf"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease_flag=()
+          case "$TAG" in
+            *-*) prerelease_flag=(--prerelease) ;;
+          esac
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --generate-notes \
+            "${prerelease_flag[@]}" \
+            "fw16-backlight-bpf.tar.gz"
