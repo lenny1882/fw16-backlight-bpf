@@ -308,13 +308,23 @@ build is tied to the running kernel.
 
 ### Tests
 
-There is no automated test suite in the repository. The program and the service
-were verified on hardware with throwaway scripts that need root and the real
-modules, and those scripts are not committed. What was checked, and the numbers,
-are in [docs/requirements.md](docs/requirements.md): the filter on 8 of 8
-presses, the service's start and press sync, idle CPU, simulated re-enumeration,
-VIA failure handling, permissions, fail-closed behaviour, a reboot with changed
-hidraw numbers, and install and uninstall run twice each.
+There is no automated test suite. The checks are hardware scripts in
+[`test/hw/`](test/hw/), run by hand as root with the real modules attached. The
+docstring at the top of each gives its command and what it needs. Several ask you
+to type or press Fn+Space while they run, and each writes a log beside itself,
+which git ignores.
+
+| Script | What it checks |
+| --- | --- |
+| `w4test.py` | the filter: attached, only event reports appear; detached, the raw console is back |
+| `w5test.py` | the service: start sync, press sync and its latency, idle CPU |
+| `w5via.py` | VIA failure handling, using a virtual numpad (needs `uhid`) |
+| `w6check.py` | an installed system: node permissions, service identity, `systemd-analyze`, fail closed |
+| `w6uninstall.py` | uninstall leaves nothing, and install is idempotent |
+| `w6hotplug.py` | re-enumeration of each module, and suspend/resume |
+| `w6boot.py` | a reboot with changed hidraw numbers (run `before`, reboot, run `after`) |
+
+The numbers they produced are in [docs/requirements.md](docs/requirements.md).
 
 ### Releasing
 

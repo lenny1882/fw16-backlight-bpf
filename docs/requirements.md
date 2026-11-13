@@ -18,7 +18,7 @@ Remaining (all optional):
 - Suspend/resume has not been tested (`sudo python3 -I test/hw/w6hotplug.py suspend`). A physical module pull was deliberately skipped.
 - Only the ISO keyboard (`32AC:0018`) is supported by the service and the udev rule; the filter also matches ANSI (`0012`) and JIS (`0019`).
 - The numpad is not re-synced when it returns, only on the next press (a documented limit).
-- The hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
+- The hardware test scripts are in `test/hw/`; each needs root and the real modules, and its docstring gives the command.
 
 Facts learned that affect later work:
 - Regression on kernel 7.3.4 (2026-11-13), after the 7.2.15 verification: the W4 test (8 presses, 8 valid event reports, none other; detached shows raw) and the W5 test (unequal and equal start, 4 presses within 0.16 s, 0 idle CPU) both passed again. The hidraw numbers had swapped by then (keyboard hidraw1 to 4, numpad hidraw5 to 8, the reverse of earlier runs) and the service synced the right way round.
