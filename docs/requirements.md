@@ -11,7 +11,7 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
 | W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
-| W6 Confinement and install | In progress. Installed and verified on hardware: permissions, service identity, sandbox score, fail closed. Left: `make install` then reboot, uninstall, hidraw numbers after reboot, physical re-seat, suspend/resume, numpad re-sync. |
+| W6 Confinement and install | In progress. Verified on hardware: permissions, service identity, sandbox score, fail closed, uninstall and repeat install. Left: `make install` then reboot (with no manual step), hidraw numbers after reboot, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
@@ -148,7 +148,7 @@ Acceptance:
 - [x] Fail-closed check implemented and shown working, in two layers. (1) The unprivileged service cannot read `/sys/fs/bpf`, so the filter check lives in the root helper `grant-console` (see the access item above). (2) The service refuses raw text: with the filter removed under the running service and one key pressed, it logged `console is not filtered (raw text); refusing to run` and exited 2, and `RestartPreventExitStatus=2` keeps it failed. Limit: layer 2 reads one raw report into memory before it notices; it is never logged.
 - [ ] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access. The logind ACL issue does not apply: these nodes carry only the `seat` tag, not `uaccess`. A fresh boot and a live re-seat are still to be tested.
 - [ ] `make install` then reboot: the program loads, the service starts, sync works, with no manual step.
-- [ ] `make uninstall` leaves no udev rule, object, unit or loaded program.
+- [x] `make uninstall` leaves no udev rule, object, unit or loaded program (2026-11-13: run twice, both exit 0; no installed file, no group, unit not found, no loaded program, and all `32AC` nodes back to `root:root 0600`). The first attempt exposed a bug: nodes granted to the group kept `0660` with a dangling group id after the group was deleted, because udev does not reset ownership on a change event; uninstall now resets them first. `make install` run twice and `make reload` also exit 0, and press sync works afterwards.
 - [ ] After the install and a reboot, the service finds its nodes when the hidraw numbers differ from the previous boot (record the numbers before and after). Not demonstrable earlier: the console re-enumerated as `hidraw8` again.
 - [ ] A physical re-seat of each module and a suspend/resume cycle: the udev rule re-attaches the filter by itself, the service keeps running, and the next press syncs. (W5 only simulated re-enumeration, re-attaching the filter by hand.)
 - [ ] A numpad that returns (re-seat) is re-synced without waiting for a press. Needs the service to notice the node returning; whether an unprivileged `DynamicUser` service may do that (for example through a netlink uevent socket) depends on this unit. If not feasible, document the limit instead.

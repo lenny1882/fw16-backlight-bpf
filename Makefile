@@ -17,7 +17,7 @@ UNIT_DIR   := /etc/systemd/system
 SYSUSERS   := /etc/sysusers.d/$(NAME).conf
 KB_PID     := 0018
 
-all: check-build $(OBJ) $(SYNC)
+all: check-build $(OBJ) $(SYNC) $(BUILD)/$(UNIT) $(BUILD)/$(RULES)
 
 # B1: name the missing tool and its Arch package instead of a raw error.
 check-build:
@@ -81,6 +81,11 @@ uninstall:
 	@for d in /sys/bus/hid/devices/0003:32AC:$(KB_PID).*; do \
 		[ -e "$$d" ] && $(SUDO) udev-hid-bpf remove "$$d" || true; \
 	done
+	# udev does not reset ownership on a change event, so nodes granted to the
+	# group would keep a dangling group id; reset them before the group goes.
+	@if getent group $(NAME) >/dev/null; then \
+		$(SUDO) find /dev -maxdepth 1 -name 'hidraw*' -group $(NAME) -exec chgrp root {} + -exec chmod 0600 {} +; \
+	fi
 	$(SUDO) rm -f /etc/udev-hid-bpf/$(NAME).bpf.o /etc/udev/rules.d/99-hid-bpf-$(NAME).rules \
 		$(RULES_DIR)/$(RULES) $(UNIT_DIR)/$(UNIT) $(SYSUSERS) \
 		$(LIBEXECDIR)/$(NAME)-sync $(LIBEXECDIR)/grant-console
