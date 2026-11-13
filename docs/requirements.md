@@ -10,8 +10,8 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W2 Step 1 on hardware | Done. |
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
-| W5 Service | In progress. One item left: a VIA failure on an open node. Start sync, press sync, idle CPU and simulated re-enumeration verified on hardware. |
-| W6 Confinement and install | Not started. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
+| W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
+| W6 Confinement and install | Next. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
@@ -137,7 +137,7 @@ Acceptance:
 - [x] Fn+Space four times: after each press the numpad matched the keyboard within one 50 ms poll in 3 cases and 0.16 s in 1; idle CPU was 0 ticks over 5 s (blocked in `read()`, no timer).
 - [x] Nodes are found by product id and descriptor, never by hidraw number: `find_node()` in `src/fw16-backlight-sync.c` takes only a product id and a descriptor prefix, and it found the right nodes on every run. (The change-of-number case is checked in W6, after a reboot.)
 - [x] Simulated re-enumeration of each module (USB `authorized` 0 then 1) leaves the service running; the next press syncs. One `console read failed` was logged for the keyboard.
-- [ ] A VIA read or write failure logs once and the service continues. The numpad-node-missing case passed (two presses, one log line, service kept running). A failing read or write on an open node was not exercised.
+- [x] A VIA failure logs once and the service continues (2026-11-13, kernel 7.3.4, virtual numpad made with `uhid`; the real numpad was deauthorized for the test). A silent numpad gave one log line across the start sync and two presses; a correct reply then set the right level with no new line; going silent again logged again, once. A wrong echo was reported as a timeout, with the same text, so it was not logged twice; the separate `did not match` message needs four wrong replies in a row. A failing `write()` was not exercised (uhid does not acknowledge output reports), but it goes through the same `report()` path.
 
 ### W6 Confinement and install (step 4)
 Covers: S1 to S4, B2, B3, B4.
