@@ -11,8 +11,8 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
 | W5 Service | Done. Start sync, press sync, idle CPU, simulated re-enumeration and VIA failure handling verified on hardware (kernel 7.2.15 and again on 7.3.4). |
-| W6 Confinement and install | In progress. Verified on hardware: permissions, service identity, sandbox score, fail closed, uninstall and repeat install, reboot with changed hidraw numbers. Left: physical re-seat, suspend/resume, numpad re-sync. |
-| W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
+| W6 Confinement and install | Done, except suspend/resume (optional, not tested; a physical module pull was deliberately skipped). Verified on hardware: permissions, service identity, sandbox score, fail closed, uninstall and repeat install, reboot with changed hidraw numbers, software re-enumeration of both modules. |
+| W7 Repo housekeeping | Next: no `LICENSE`; the README "Try step 1" section is out of date. |
 
 Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
 1. `make clean && make` (a plain `make` may keep the old `vmlinux.h`).
@@ -22,8 +22,8 @@ The throwaway hardware test scripts are in `test/hw/` in the working tree and ar
 
 Next, W6 (the install is in place; the scripts are untracked in `test/hw/`, each needs root):
 1. Done: reboot check (`w6boot.py before` and `after`).
-2. `sudo python3 -I test/hw/w6hotplug.py` (physical re-seat of the numpad and keyboard, then suspend/resume; one Fn+Space press after each).
-3. Decide the numpad re-sync (document the limit: the unit sets `RestrictAddressFamilies=none`, so the service cannot listen for uevents), then W7.
+2. Done: software re-enumeration of both modules (`w6hotplug.py`). Physical re-seat skipped on purpose; suspend/resume optional (`w6hotplug.py suspend`).
+3. Done: numpad re-sync documented as a limit. Next: W7.
 
 Facts learned that affect later work:
 - Regression on kernel 7.3.4 (2026-11-13), after the 7.2.15 verification: the W4 test (8 presses, 8 valid event reports, none other; detached shows raw) and the W5 test (unequal and equal start, 4 presses within 0.16 s, 0 idle CPU) both passed again. The hidraw numbers had swapped by then (keyboard hidraw1 to 4, numpad hidraw5 to 8, the reverse of earlier runs) and the service synced the right way round.
@@ -151,12 +151,12 @@ Acceptance:
 - [x] udev rule gives the group access to the filtered console node and the two VIA nodes only; no other `32AC` node. Checked on the installed system: of the 10 `32AC` nodes only the keyboard console and the keyboard and numpad VIA nodes were `root:fw16-backlight 0660`; the numpad console and every key interface stayed `root:root 0600`.
 - [x] Systemd unit runs as `DynamicUser`; `systemd-analyze security` reports 0.6 SAFE, and `systemd-analyze verify` is clean. The running service had uid 63932, group `fw16-backlight`, `CapEff` 0 and `NoNewPrivs` 1.
 - [x] Fail-closed check implemented and shown working, in two layers. (1) The unprivileged service cannot read `/sys/fs/bpf`, so the filter check lives in the root helper `grant-console` (see the access item above). (2) The service refuses raw text: with the filter removed under the running service and one key pressed, it logged `console is not filtered (raw text); refusing to run` and exited 2, and `RestartPreventExitStatus=2` keeps it failed. Limit: layer 2 reads one raw report into memory before it notices; it is never logged.
-- [ ] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access. The logind ACL issue does not apply: these nodes carry only the `seat` tag, not `uaccess`. A fresh boot gave working access (checked after the reboot). A live re-seat is still to be tested.
+- [x] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access. The logind ACL issue does not apply: these nodes carry only the `seat` tag, not `uaccess`. A fresh boot gave working access. A live re-seat was forced in software (USB `authorized` 0 then 1) for both modules, not by pulling one: the udev rule re-attached the filter and re-granted the console and VIA nodes by itself, the service stayed active with 0 restarts, and the next press synced the numpad.
 - [x] `make install` then reboot: the program loads, the service starts, sync works, with no manual step (2026-11-13, kernel 7.3.4). After the reboot the service was started by systemd 7.1 s into the boot with 0 restarts, the filter was loaded on the keyboard, permissions were right, and a press synced the numpad. Levels were already equal at boot, but they had also been equal before the reboot, so this run does not show the start sync (W5 did).
 - [x] `make uninstall` leaves no udev rule, object, unit or loaded program (2026-11-13: run twice, both exit 0; no installed file, no group, unit not found, no loaded program, and all `32AC` nodes back to `root:root 0600`). The first attempt exposed a bug: nodes granted to the group kept `0660` with a dangling group id after the group was deleted, because udev does not reset ownership on a change event; uninstall now resets them first. `make install` run twice and `make reload` also exit 0, and press sync works afterwards.
 - [x] After the install and a reboot, the service finds its nodes when the hidraw numbers differ from the previous boot: 6 of 8 `32AC` nodes changed (the keyboard and numpad interfaces swapped places: keyboard console `hidraw4` to `hidraw8`, VIA `hidraw2` to `hidraw6`, and the reverse for the numpad), and sync still worked.
-- [ ] A physical re-seat of each module and a suspend/resume cycle: the udev rule re-attaches the filter by itself, the service keeps running, and the next press syncs. (W5 only simulated re-enumeration, re-attaching the filter by hand.)
-- [ ] A numpad that returns (re-seat) is re-synced without waiting for a press. Needs the service to notice the node returning; whether an unprivileged `DynamicUser` service may do that (for example through a netlink uevent socket) depends on this unit. If not feasible, document the limit instead.
+- [ ] Suspend/resume: the service keeps running and the next press syncs. Not tested. A physical re-seat was deliberately not tested (it does not happen in normal use); the software re-enumeration in the access item above covers the same udev path. Optional: `sudo python3 -I test/hw/w6hotplug.py suspend`.
+- [x] A numpad that returns (re-seat) is re-synced without waiting for a press: not feasible, documented as a limit in the README. The unit sets `RestrictAddressFamilies=none`, so the service cannot listen for uevents. In the software re-enumeration the numpad kept its level (85/85), so the effect may not show up in practice; a real power cycle would probably reset it, untested.
 
 ### W7 Repo housekeeping
 Acceptance:

@@ -8,14 +8,14 @@ Protocol facts and how they were found: [docs/protocol.md](docs/protocol.md).
 
 ## Status
 
-Steps 1 and 2 of 4 done and verified on hardware. Step 3 verified on hardware for start sync, press sync and VIA failure handling; physical re-seat and suspend/resume are checked in step 4. Step 4 not started.
+All four steps work and were verified on hardware (Framework Laptop 16, ISO keyboard module and numpad module, kernel 7.2.15 and 7.3.4). Not tested: suspend/resume, and physically pulling a module (forcing a re-enumeration in software works).
 
 | Step | What | State |
 |---|---|---|
 | 1 | Match `backlight step: N` across 32-byte reports and log it with `bpf_printk` | works on the module: one match per Fn+Space (33 of 33); needs the console node held open |
 | 2 | Drop every other console report and rewrite the match to a short event report | works on the module: 8 presses gave 8 event reports and nothing else |
 | 3 | Service: blocking read of the filtered node, read keyboard level, set numpad over VIA, one sync at start | start sync, press sync, 0 idle CPU, re-enumeration and VIA failure handling verified on hardware |
-| 4 | udev rule, systemd unit, install script, fail-closed check that the filter is loaded | not started |
+| 4 | udev rule, systemd unit, install script, fail-closed check that the filter is loaded | `make install` and `make uninstall` verified (twice each); unprivileged sandboxed service (security score 0.6 SAFE); fail closed in two layers; reboot with changed hidraw numbers; software re-enumeration of both modules |
 
 ## Requirements
 
@@ -46,8 +46,11 @@ The console device is the keyboard's HID device whose report descriptor starts `
 ## Known limits
 
 - The console line is a firmware debug print. A firmware build without debug output removes it.
-- `/sys/fs/bpf` is root-only, so an unprivileged service cannot check that the filter is attached; step 4 has to solve that.
-- Only the keyboard modules (`32AC:0012`, `0018`, `0019`) are matched. The numpad is a sync target, not a source.
+- `/sys/fs/bpf` is root-only, so the unprivileged service cannot check that the filter is attached. A root udev helper (`dist/grant-console`) opens the keyboard console node to the service group only while the filter is loaded, and sets it back to root-only otherwise. The service also exits if it reads raw console text, but by then it has read one raw report into memory (it is never logged).
+- The filter attaches to the ISO, ANSI and JIS keyboard modules (`32AC:0012`, `0018`, `0019`), but the service and the udev rule handle only the ISO module (`0018`) and the numpad (`0014`). Only the ISO keyboard has been tested.
+- The numpad is synced at service start and on each Fn+Space press, not when it reappears after a re-seat, so it can stay at an old level until the next press. The service unit blocks netlink (`RestrictAddressFamilies=none`), so it cannot watch for the module returning.
+- Suspend/resume and physically pulling a module were not tested. Forcing a re-enumeration in software (USB `authorized` 0 then 1) works: the udev rule re-attaches the filter and the service keeps running.
+- Removing the filter without a udev event on the console node leaves the service's group access in place until the next event; the service's own raw-text check is the backstop.
 
 ## License
 
