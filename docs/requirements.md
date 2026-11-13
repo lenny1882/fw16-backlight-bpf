@@ -17,6 +17,7 @@ The working list. Tick items as they are verified on hardware, not when written.
 Facts learned that affect later work:
 - Console reports only arrive while the console hidraw node is held open.
 - The module can re-enumerate (console went from `0003:32AC:0018.0009` / `hidraw8` to `.000F` / `hidraw4`). An attachment does not survive that, and the service must not rely on ids or hidraw numbers.
+- A numpad that is deauthorized and restored keeps its backlight level, and the service does not notice it coming back, so it stays out of sync until the next press. A physical re-seat probably resets it; not tested. Fixing this needs the service to watch for the node returning (netlink or udev), which is entangled with W6 permissions.
 - On this machine tracing is at `/sys/kernel/tracing/trace_pipe`, not under `debug`.
 - `udev-hid-bpf add` needs an absolute path to the object file when not run from the project directory.
 - The vendored `hid_bpf_helpers.h` also needs `hid_report_descriptor_helpers.h`.
@@ -126,13 +127,14 @@ Covers: F4, F5, F6, F7.
 Acceptance:
 - [x] At start the numpad level equals the keyboard level, from both an unequal starting state and an already equal one (numpad forced to 0 against keyboard 85, then equal; both ended at 85, 2026-11-13).
 - [x] Fn+Space four times: after each press the numpad matched the keyboard within one 50 ms poll in 3 cases and 0.16 s in 1; idle CPU was 0 ticks over 5 s (blocked in `read()`, no timer).
-- [ ] Nodes are found by product id and interface; reboot with different hidraw numbers works unchanged.
-- [ ] Unplugging and re-seating the modules, or suspend/resume, leaves the service running and syncing.
-- [ ] A VIA read or write failure logs once and the service continues.
+- [ ] Nodes are found by product id and interface; reboot with different hidraw numbers works unchanged. Found correctly on every run so far, but the console re-enumerated as `hidraw8` again, so a changed number has not been seen. Needs a reboot test.
+- [ ] Unplugging and re-seating the modules, or suspend/resume, leaves the service running and syncing. Simulated re-enumeration (USB `authorized` 0 then 1) passed for both modules (service kept running, synced on the next press, one `console read failed` logged). Physical re-seat and suspend/resume untested.
+- [ ] A VIA read or write failure logs once and the service continues. The numpad-node-missing case passed (two presses, one log line, service kept running). A failing read or write on an open node was not exercised.
 
 ### W6 Confinement and install (step 4)
 Covers: S1 to S4, B2, B3, B4.
 Acceptance:
+- [ ] The service cannot open the console node before the filter is attached. After a re-enumeration the node exists for a moment without the filter, and a keystroke in that gap would be read raw (the service then exits, but it has seen the text). The W5 re-seat test did not exercise this because no key was pressed in the gap.
 - [ ] udev rule gives the group access to the filtered console node and the two VIA nodes only; no other `32AC` node.
 - [ ] Systemd unit runs as `DynamicUser`; `systemd-analyze security` reports no exposure for network or filesystem writes beyond what is needed.
 - [ ] Fail-closed check implemented and shown working: unload the filter, the service refuses to read and logs the reason. The approach is recorded (the root-only `/sys/fs/bpf` rules out a direct check by an unprivileged service).
