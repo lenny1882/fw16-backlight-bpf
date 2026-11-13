@@ -2,6 +2,26 @@
 
 The working list. Tick items as they are verified on hardware, not when written.
 
+## Progress (as of 2026-11-13)
+
+| Item | State |
+|---|---|
+| W1 Build prerequisites | Packages installed and `make` builds. Dependency checks in the Makefile (B1) not written. |
+| W2 Step 1 on hardware | Done. |
+| W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
+| W4 Filter and event report | Next. Agree the event report format first. |
+| W5 Service, W6 Confinement and install | Not started. |
+| W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
+
+Facts learned that affect later work:
+- Console reports only arrive while the console hidraw node is held open.
+- The module can re-enumerate (console went from `0003:32AC:0018.0009` / `hidraw8` to `.000F` / `hidraw4`). An attachment does not survive that, and the service must not rely on ids or hidraw numbers.
+- On this machine tracing is at `/sys/kernel/tracing/trace_pipe`, not under `debug`.
+- `udev-hid-bpf add` needs an absolute path to the object file when not run from the project directory.
+- The vendored `hid_bpf_helpers.h` also needs `hid_report_descriptor_helpers.h`.
+- The probe was checked on the key interface `.0005` only. The VIA interface, the other key interface and the numpad were not.
+- Nothing is attached or installed at the moment; the program was loaded by hand and does not survive a reboot or re-enumeration.
+
 ## 1. Goal
 
 Keep the Framework Laptop 16 keyboard and numpad backlights in step on Linux (Arch).
@@ -71,7 +91,7 @@ Each has an ID, referenced by the work items below.
 Install `udev-hid-bpf` and `bpf`; add the dependency checks.
 Covers: B1.
 Acceptance:
-- [ ] `sudo pacman -S udev-hid-bpf bpf` done; `make` produces `build/fw16-backlight.bpf.o` with no errors.
+- [x] `sudo pacman -S udev-hid-bpf bpf` done; `make` produces `build/fw16-backlight.bpf.o` with no errors.
 - [ ] With `bpftool` hidden from `PATH`, `make` exits non-zero and prints the tool name and `pacman -S bpf`; no raw `command not found`.
 - [ ] Same for `clang`, for a missing `/sys/kernel/btf/vmlinux`, and for `udev-hid-bpf` on `make install`.
 
@@ -88,9 +108,9 @@ Acceptance:
 Temporary logging of raw report text.
 Covers: F2, D2.
 Acceptance:
-- [ ] Recorded in `docs/protocol.md`: whether `backlight step: N` ever straddles two reports, and how NUL padding appears.
-- [ ] If it can straddle, a test press sequence that does so is detected correctly; if not, the matcher's cross-report state is still kept and the finding is noted.
-- [ ] Temporary logging removed.
+- [x] Recorded in `docs/protocol.md`: the line straddles two reports in 17 of 40 presses, and NUL padding is occasional (2.4% of reports).
+- [x] A test sequence that straddles was detected correctly: all 17 straddled lines produced the right STEP, with each report's start state equal to the previous report's end state.
+- [x] Temporary logging removed.
 
 ### W4 Filter and event report (step 2)
 Covers: F3, S1.
@@ -128,7 +148,7 @@ Acceptance:
 
 | Question | Blocks |
 |---|---|
-| Does `backlight step` ever straddle a report boundary, and how is padding laid out? | W3, W4 |
+| ~~Does `backlight step` ever straddle a report boundary, and how is padding laid out?~~ Answered in W3 (yes, 17 of 40; sparse NULs). | none |
 | What is the event report's format, and can the program rewrite and pass one while dropping the rest? | W4 |
 | How does an unprivileged service verify the filter is attached? | W6 |
 | Is the step-to-level mapping really step x 85? (Moot if F5 holds, but worth recording.) | D2 |

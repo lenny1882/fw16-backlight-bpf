@@ -38,6 +38,15 @@ with N cycling 0, 1, 2, 3, exactly one line per press. The console also prints e
 
 Framework's QMK fork has a branch that builds with no debug output (`fl16-nodebug`), so the console line is a firmware build option, not a contract.
 
+## Report boundaries
+
+Measured on 2026-11-13 over 20,295 console reports and 40 Fn+Space presses. Every report is 32 bytes. The step number cycled 0,1,2,3 with no break.
+
+- The line `backlight step: N` straddles two reports about as often as not: 17 of 40 presses were split (for example `...backlight ste` then `p: 0.Col 4 ...`), 23 were whole in one report. The split falls at any offset. A matcher must carry its state across reports.
+- Text is packed contiguously across reports. Lines end with a newline-like non-printable byte, then the next line follows in the same report.
+- NUL bytes appear in 487 of 20,295 reports (2.4%). 144 have only trailing padding; in 343 a NUL is not only trailing (leading or interior, not broken down further). The matcher skips NULs.
+- One gap in the program's report counter (955 reports) fell in a stretch with no presses; the trace buffer drops lines under load, which does not affect the program itself.
+
 ## Console reports only flow while the node is open
 
 With the BPF program attached but nothing holding the console hidraw node open, no `backlight step` line was seen. With `cat` holding the node open, every press was matched, one per press (5 of 5, steps 0, 1, 2, 3, 0). Most likely the USB HID driver only polls the interrupt endpoint while the device is open. The service must keep the console node open, which it does anyway by reading it.
