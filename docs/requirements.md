@@ -9,8 +9,8 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W1 Build prerequisites | Packages installed and `make` builds. Dependency checks in the Makefile (B1) not written. |
 | W2 Step 1 on hardware | Done. |
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
-| W4 Filter and event report | Next. Agree the event report format first. |
-| W5 Service, W6 Confinement and install | Not started. |
+| W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
+| W5 Service, W6 Confinement and install | Not started. W5 is next. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Facts learned that affect later work:
@@ -115,10 +115,10 @@ Acceptance:
 ### W4 Filter and event report (step 2)
 Covers: F3, S1.
 Acceptance:
-- [ ] Event report format is written down in `docs/protocol.md`.
-- [ ] With the filter attached, `cat` on the console hidraw node while typing for 30 s shows no key positions, no matrix dump, nothing but event reports.
-- [ ] One Fn+Space press yields exactly one event report with the correct step.
-- [ ] With the filter detached, the raw console is visible again (proves the filter is what hides it).
+- [x] Event report format is written down in `docs/protocol.md` (4-byte high-bit magic, checked against 27,219 raw reports).
+- [x] With the filter attached, reading the console node while typing for 30 s gave 8 reports, all valid event reports (2026-11-13). Read with a script that validates every report, not with `cat`.
+- [x] One Fn+Space press yields exactly one event report: 8 presses gave 8 reports, steps 2,3,0,1,2,3,0,1 in order. The step values were checked for cycling, not against an independent reading of the keyboard level.
+- [x] With the filter detached, the raw console is visible again: 2,951 raw reports in 5 s, none with the magic.
 
 ### W5 Service (step 3)
 Covers: F4, F5, F6, F7.
@@ -149,7 +149,7 @@ Acceptance:
 | Question | Blocks |
 |---|---|
 | ~~Does `backlight step` ever straddle a report boundary, and how is padding laid out?~~ Answered in W3 (yes, 17 of 40; sparse NULs). | none |
-| What is the event report's format, and can the program rewrite and pass one while dropping the rest? | W4 |
+| ~~What is the event report's format, and can the program rewrite and pass one while dropping the rest?~~ Answered in W4 (yes; see `docs/protocol.md`). | none |
 | How does an unprivileged service verify the filter is attached? | W6 |
 | Is the step-to-level mapping really step x 85? (Moot if F5 holds, but worth recording.) | D2 |
 | Does the numpad's console print `backlight step` for its own key? Not needed for the current scope. | none |
