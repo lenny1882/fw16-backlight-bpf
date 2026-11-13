@@ -14,16 +14,11 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W6 Confinement and install | Done, except suspend/resume (optional, not tested; a physical module pull was deliberately skipped). Verified on hardware: permissions, service identity, sandbox score, fail closed, uninstall and repeat install, reboot with changed hidraw numbers, software re-enumeration of both modules. |
 | W7 Repo housekeeping | Done. |
 
-Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
-1. `make clean && make` (a plain `make` may keep the old `vmlinux.h`).
-2. Re-run `test/hw/w4test.py` and `test/hw/w5test.py` as a regression on 7.3.4.
-3. Run `test/hw/w5via.py` (needs `sudo modprobe uhid`) to finish W5; then W6.
-The throwaway hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
-
-Next, W6 (the install is in place; the scripts are untracked in `test/hw/`, each needs root):
-1. Done: reboot check (`w6boot.py before` and `after`).
-2. Done: software re-enumeration of both modules (`w6hotplug.py`). Physical re-seat skipped on purpose; suspend/resume optional (`w6hotplug.py suspend`).
-3. Done: numpad re-sync documented as a limit. Next: W7.
+Remaining (all optional):
+- Suspend/resume has not been tested (`sudo python3 -I test/hw/w6hotplug.py suspend`). A physical module pull was deliberately skipped.
+- Only the ISO keyboard (`32AC:0018`) is supported by the service and the udev rule; the filter also matches ANSI (`0012`) and JIS (`0019`).
+- The numpad is not re-synced when it returns, only on the next press (a documented limit).
+- The hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
 
 Facts learned that affect later work:
 - Regression on kernel 7.3.4 (2026-11-13), after the 7.2.15 verification: the W4 test (8 presses, 8 valid event reports, none other; detached shows raw) and the W5 test (unequal and equal start, 4 presses within 0.16 s, 0 idle CPU) both passed again. The hidraw numbers had swapped by then (keyboard hidraw1 to 4, numpad hidraw5 to 8, the reverse of earlier runs) and the service synced the right way round.
@@ -34,8 +29,8 @@ Facts learned that affect later work:
 - On this machine tracing is at `/sys/kernel/tracing/trace_pipe`, not under `debug`.
 - `udev-hid-bpf add` needs an absolute path to the object file when not run from the project directory.
 - The vendored `hid_bpf_helpers.h` also needs `hid_report_descriptor_helpers.h`.
-- The probe was checked on the key interface `.0005` only. The VIA interface, the other key interface and the numpad were not.
-- Nothing is attached or installed at the moment; the program was loaded by hand and does not survive a reboot or re-enumeration.
+- The probe rejects every interface except the console: on the installed system the filter is loaded on 1 of the 4 keyboard HID devices. The filter does not match the numpad at all (its product id is not in the list).
+- The project is installed on the test machine (`make install`): the filter loads by itself when the keyboard module appears, including after a reboot or re-enumeration, and the service starts at boot.
 
 ## 1. Goal
 
