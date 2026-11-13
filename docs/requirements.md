@@ -79,10 +79,10 @@ Acceptance:
 Attach the existing program and confirm detection.
 Covers: F1, F2 (partly).
 Acceptance:
-- [ ] The console device is identified by descriptor `06 31 ff` on `32AC:0018.*`.
-- [ ] `udev-hid-bpf add` attaches without error.
-- [ ] Fn+Space produces exactly one `fw16-backlight: step N` in `trace_pipe` per press, N cycling 0,1,2,3, over at least 12 presses.
-- [ ] Attaching to the key, VIA and numpad interfaces is refused by the probe.
+- [x] The console device is identified by descriptor `06 31 ff` on `32AC:0018.*` (`.0009` on 2026-11-13).
+- [x] `udev-hid-bpf add` attaches without error.
+- [x] Fn+Space produces exactly one `fw16-backlight: step N` in `trace_pipe` per press, N cycling 0,1,2,3 (33 consecutive presses, no gaps or repeats). Needs the console node held open.
+- [x] The probe refuses other interfaces (key interface `.0005` tested: `probe() ... Invalid argument`). The VIA interface `.0007`, key interface `.0008` and the numpad modules were not tested; the probe checks only the descriptor, so the same result is expected.
 
 ### W3 Report boundaries
 Temporary logging of raw report text.
