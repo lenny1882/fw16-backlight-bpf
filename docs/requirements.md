@@ -21,6 +21,8 @@ Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
 The throwaway hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
 
 Facts learned that affect later work:
+- Regression on kernel 7.3.4 (2026-11-13), after the 7.2.15 verification: the W4 test (8 presses, 8 valid event reports, none other; detached shows raw) and the W5 test (unequal and equal start, 4 presses within 0.16 s, 0 idle CPU) both passed again. The hidraw numbers had swapped by then (keyboard hidraw1 to 4, numpad hidraw5 to 8, the reverse of earlier runs) and the service synced the right way round.
+- At 13:13:05 on 2026-11-13, during the first W4 run on 7.3.4, both modules disconnected together and re-enumerated (the numpad logged `Device not responding to setup address`, error -71 first). The test's read failed with EIO. Not reproduced in the next two runs; cause unknown, nothing from this project in the kernel log beforehand.
 - Console reports only arrive while the console hidraw node is held open.
 - The module can re-enumerate (console went from `0003:32AC:0018.0009` / `hidraw8` to `.000F` / `hidraw4`). An attachment does not survive that, and the service must not rely on ids or hidraw numbers.
 - A numpad that is deauthorized and restored keeps its backlight level, and the service does not notice it coming back, so it stays out of sync until the next press. A physical re-seat probably resets it; not tested. Fixing this needs the service to watch for the node returning (netlink or udev), which is entangled with W6 permissions.

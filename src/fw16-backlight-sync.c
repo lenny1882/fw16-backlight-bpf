@@ -96,7 +96,7 @@ static int find_node(unsigned int pid, const uint8_t desc[3], char *path, size_t
 		if (!f)
 			continue;
 		if (fread(rd, 1, 3, f) == 3 && memcmp(rd, desc, 3) == 0) {
-			snprintf(path, len, "/dev/%s", e->d_name);
+			snprintf(path, len, "/dev/%.32s", e->d_name);
 			found = 0;
 		}
 		fclose(f);
