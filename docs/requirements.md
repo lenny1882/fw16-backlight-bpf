@@ -14,6 +14,12 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W6 Confinement and install | Not started. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
+Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
+1. `make clean && make` (a plain `make` may keep the old `vmlinux.h`).
+2. Re-run `test/hw/w4test.py` and `test/hw/w5test.py` as a regression on 7.3.4.
+3. Run `test/hw/w5via.py` (needs `sudo modprobe uhid`) to finish W5; then W6.
+The throwaway hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
+
 Facts learned that affect later work:
 - Console reports only arrive while the console hidraw node is held open.
 - The module can re-enumerate (console went from `0003:32AC:0018.0009` / `hidraw8` to `.000F` / `hidraw4`). An attachment does not survive that, and the service must not rely on ids or hidraw numbers.
