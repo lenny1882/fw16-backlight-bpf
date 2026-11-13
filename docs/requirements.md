@@ -52,7 +52,7 @@ Out of scope:
 ## 3. Constraints
 
 - No polling. The re-sync must be driven by the `backlight step: N` console line.
-- Languages: BPF C for the program, bash for the service. Ask before adding any other language or runtime.
+- Languages: BPF C for the program, C for the service. Ask before adding any other language or runtime.
 - Code comments are rare: one short line, only for a non-obvious why.
 - Licence: GPL-2.0-only (required for HID-BPF programs).
 
