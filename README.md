@@ -124,6 +124,14 @@ again by `make uninstall`.
 
     git clone https://github.com/lenny1882/fw16-backlight-bpf
     cd fw16-backlight-bpf
+
+Or, without cloning, from the newest release:
+
+    curl -fsSL https://github.com/lenny1882/fw16-backlight-bpf/releases/latest/download/fw16-backlight-bpf.tar.gz | tar -xz
+    cd fw16-backlight-bpf
+
+Then build and install:
+
     make
     make install     # asks for sudo
     make reload      # applies it to modules that are already attached
