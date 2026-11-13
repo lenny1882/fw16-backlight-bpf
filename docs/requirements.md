@@ -10,8 +10,8 @@ The working list. Tick items as they are verified on hardware, not when written.
 | W2 Step 1 on hardware | Done. |
 | W3 Report boundaries | Done. The line straddles two reports in 17 of 40 presses; the matcher handles it. |
 | W4 Filter and event report | Done. Verified on hardware (8 presses, 8 event reports, nothing else). |
-| W5 Service | In progress. Start sync and press sync verified on hardware. Not yet tested: different hidraw numbers after reboot, re-seat and suspend/resume, VIA failure. |
-| W6 Confinement and install | Not started. |
+| W5 Service | In progress. One item left: a VIA failure on an open node. Start sync, press sync, idle CPU and simulated re-enumeration verified on hardware. |
+| W6 Confinement and install | Not started. It owns the checks that need the install: reboot with changed hidraw numbers, physical re-seat, suspend/resume, numpad re-sync. |
 | W7 Repo housekeeping | Not started: no `LICENSE`, README table only updated for step 1. |
 
 Facts learned that affect later work:
@@ -127,8 +127,8 @@ Covers: F4, F5, F6, F7.
 Acceptance:
 - [x] At start the numpad level equals the keyboard level, from both an unequal starting state and an already equal one (numpad forced to 0 against keyboard 85, then equal; both ended at 85, 2026-11-13).
 - [x] Fn+Space four times: after each press the numpad matched the keyboard within one 50 ms poll in 3 cases and 0.16 s in 1; idle CPU was 0 ticks over 5 s (blocked in `read()`, no timer).
-- [ ] Nodes are found by product id and interface; reboot with different hidraw numbers works unchanged. Found correctly on every run so far, but the console re-enumerated as `hidraw8` again, so a changed number has not been seen. Needs a reboot test.
-- [ ] Unplugging and re-seating the modules, or suspend/resume, leaves the service running and syncing. Simulated re-enumeration (USB `authorized` 0 then 1) passed for both modules (service kept running, synced on the next press, one `console read failed` logged). Physical re-seat and suspend/resume untested.
+- [x] Nodes are found by product id and descriptor, never by hidraw number: `find_node()` in `src/fw16-backlight-sync.c` takes only a product id and a descriptor prefix, and it found the right nodes on every run. (The change-of-number case is checked in W6, after a reboot.)
+- [x] Simulated re-enumeration of each module (USB `authorized` 0 then 1) leaves the service running; the next press syncs. One `console read failed` was logged for the keyboard.
 - [ ] A VIA read or write failure logs once and the service continues. The numpad-node-missing case passed (two presses, one log line, service kept running). A failing read or write on an open node was not exercised.
 
 ### W6 Confinement and install (step 4)
@@ -141,6 +141,9 @@ Acceptance:
 - [ ] The udev `MODE` / logind ACL issue is handled; a fresh boot and a live re-seat both give working access.
 - [ ] `make install` then reboot: the program loads, the service starts, sync works, with no manual step.
 - [ ] `make uninstall` leaves no udev rule, object, unit or loaded program.
+- [ ] After the install and a reboot, the service finds its nodes when the hidraw numbers differ from the previous boot (record the numbers before and after). Not demonstrable earlier: the console re-enumerated as `hidraw8` again.
+- [ ] A physical re-seat of each module and a suspend/resume cycle: the udev rule re-attaches the filter by itself, the service keeps running, and the next press syncs. (W5 only simulated re-enumeration, re-attaching the filter by hand.)
+- [ ] A numpad that returns (re-seat) is re-synced without waiting for a press. Needs the service to notice the node returning; whether an unprivileged `DynamicUser` service may do that (for example through a netlink uevent socket) depends on this unit. If not feasible, document the limit instead.
 
 ### W7 Repo housekeeping
 Acceptance:
