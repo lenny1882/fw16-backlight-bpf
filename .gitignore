@@ -1,1 +1,5 @@
 build/
+
+# Output of the hardware test scripts
+test/hw/*.log
+test/hw/*.json
