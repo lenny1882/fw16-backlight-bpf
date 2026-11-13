@@ -20,6 +20,11 @@ Next, after the reboot onto 7.3.4 (verification so far was on 7.2.15):
 3. Run `test/hw/w5via.py` (needs `sudo modprobe uhid`) to finish W5; then W6.
 The throwaway hardware test scripts are in `test/hw/` in the working tree and are deliberately not committed; each needs root and its docstring gives the command. If that directory is gone, they have to be rewritten.
 
+Next, W6 (the install is in place; the scripts are untracked in `test/hw/`, each needs root):
+1. `sudo python3 -I test/hw/w6boot.py before`, reboot, then `sudo python3 -I test/hw/w6boot.py after` (checks the service came up unattended and compares hidraw numbers).
+2. `sudo python3 -I test/hw/w6hotplug.py` (physical re-seat of the numpad and keyboard, then suspend/resume; one Fn+Space press after each).
+3. Decide the numpad re-sync (document the limit: the unit sets `RestrictAddressFamilies=none`, so the service cannot listen for uevents), then W7.
+
 Facts learned that affect later work:
 - Regression on kernel 7.3.4 (2026-11-13), after the 7.2.15 verification: the W4 test (8 presses, 8 valid event reports, none other; detached shows raw) and the W5 test (unequal and equal start, 4 presses within 0.16 s, 0 idle CPU) both passed again. The hidraw numbers had swapped by then (keyboard hidraw1 to 4, numpad hidraw5 to 8, the reverse of earlier runs) and the service synced the right way round.
 - At 13:13:05 on 2026-11-13, during the first W4 run on 7.3.4, both modules disconnected together and re-enumerated (the numpad logged `Device not responding to setup address`, error -71 first). The test's read failed with EIO. Not reproduced in the next two runs; cause unknown, nothing from this project in the kernel log beforehand.
